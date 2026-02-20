@@ -154,6 +154,7 @@ class DimensionalityReducer:
     
     def transform_pca_only(self, features: np.ndarray) -> np.ndarray:
         """Transform new features using fitted scaler + PCA only."""
+        features = np.asarray(features, dtype=np.float64)
         features_scaled = self.scaler.transform(features)
         return self.transform_pca(features_scaled)
     
@@ -185,6 +186,7 @@ class DimensionalityReducer:
     
     def transform(self, features: np.ndarray) -> np.ndarray:
         """Transform new features using fitted reducers."""
+        features = np.asarray(features, dtype=np.float64)
         features_scaled = self.scaler.transform(features)
         features_pca = self.transform_pca(features_scaled)
         features_selected = self.transform_quantum_features(features_pca)
