@@ -9,6 +9,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
+
+# Install PyTorch CPU-only FIRST from the official CPU index
+# This avoids downloading the 2.5GB CUDA version
+RUN pip install --no-cache-dir --prefix=/install \
+    torch torchvision \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Install remaining dependencies (torch already satisfied)
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # ── Runtime stage ────────────────────────────────────────────────────
