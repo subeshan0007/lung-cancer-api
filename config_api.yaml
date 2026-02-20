@@ -1,0 +1,88 @@
+# Minimal config for API inference (CPU-only, 2D models)
+
+dataset:
+  root_dir: ""
+  cache_dir: "./data_cache"
+  num_patients: 0
+
+preprocessing:
+  image_size: [64, 256, 256]
+  max_slices: 200
+  target_resolution: 256
+  hounsfield_window: [-1000, 400]
+  normalize_range: [0, 1]
+  min_nodule_size: 3
+
+labels:
+  malignancy_threshold: 4
+  min_radiologist_agreement: 2
+
+features:
+  radiomics:
+    enabled: false
+    use_pyradiomics: false
+  deep_learning:
+    enabled: true
+    model: "resnet3d_18"
+    layer: "avgpool"
+    pretrained: true
+    feature_dim: 512
+
+dim_reduction:
+  pca:
+    n_components: 100
+    variance_threshold: 0.95
+  quantum_features:
+    n_features: 12
+    selection_method: "mutual_info"
+    use_scaling: true
+
+hybrid:
+  enabled: true
+  n_qubits: 6
+  n_layers: 5
+  n_quantum_features: 12
+  use_quantum_encoder: true
+  use_data_reuploading: true
+  use_feature_interactions: true
+  use_smote: true
+  tune_svm: true
+  optimize_threshold: true
+  train_quantum_params: true
+  quantum_train_epochs: 80
+  quantum_train_lr: 0.05
+
+quantum:
+  framework: "pennylane"
+  n_qubits: 6
+  n_layers: 12
+  entanglement: "full"
+  use_data_reuploading: true
+  normalize_inputs: true
+  measurement: "expval"
+  kernel:
+    use_kernel_method: true
+    kernel_type: "fidelity"
+
+training:
+  batch_size: 16
+  epochs: 100
+  learning_rate: 0.0001
+  optimizer: "adamw"
+  weight_decay: 0.01
+  scheduler: "reduce_on_plateau"
+  scheduler_patience: 10
+  scheduler_factor: 0.5
+  early_stopping_patience: 15
+  gradient_clip: 1.0
+  use_amp: false
+  class_weighting: "balanced"
+
+gpu:
+  device: "cpu"
+  num_workers: 1
+  pin_memory: false
+  prefetch_factor: 2
+
+random_seed: 42
+deterministic: true
