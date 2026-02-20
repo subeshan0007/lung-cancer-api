@@ -517,6 +517,9 @@ class HybridQuantumClassifier:
         Returns:
             Scaled hybrid features (classical + quantum + interactions)
         """
+        # Ensure proper numpy array (fixes version mismatch between pickle and runtime)
+        X = np.asarray(X, dtype=np.float64)
+        
         # Select features for quantum encoding
         X_for_quantum = self.feature_selector.transform(X)
         

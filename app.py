@@ -187,16 +187,16 @@ def run_inference(image_array: np.ndarray) -> dict:
 
     # 2. Extract ResNet2D features → (512,)
     features = FEATURE_EXTRACTOR.extract_single(image_array)
-    features = features.reshape(1, -1)  # (1, 512)
+    features = np.asarray(features, dtype=np.float64).reshape(1, -1)  # (1, 512)
 
     results = {}
 
     # 3. Quantum model
     if "quantum" in MODELS:
         if IS_HYBRID_QUANTUM:
-            feats_q = DIM_REDUCER.transform_pca_only(features)
+            feats_q = np.asarray(DIM_REDUCER.transform_pca_only(features), dtype=np.float64)
         else:
-            feats_q = DIM_REDUCER.transform(features)
+            feats_q = np.asarray(DIM_REDUCER.transform(features), dtype=np.float64)
 
         proba = MODELS["quantum"].predict_proba(feats_q)[0]
         pred = 1 if proba[1] >= 0.5 else 0
