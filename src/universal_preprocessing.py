@@ -132,13 +132,18 @@ def _enhance_contrast(img: np.ndarray) -> np.ndarray:
     appearance of HU-windowed DICOM images.
     """
     if HAS_CV2:
-        img_u8 = np.ascontiguousarray(np.clip(img * 255, 0, 255).astype(np.uint8))
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        img_u8 = clahe.apply(img_u8)
-        return img_u8.astype(np.float32) / 255.0
-    else:
-        # Simple percentile stretch
-        p2, p98 = np.percentile(img, (2, 98))
-        if p98 > p2:
-            img = np.clip((img - p2) / (p98 - p2), 0.0, 1.0)
-        return img
+        try:
+            img_u8 = np.ascontiguousarray(
+                np.clip(img * 255, 0, 255).astype(np.uint8)
+            )
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            img_u8 = clahe.apply(img_u8)
+            return img_u8.astype(np.float32) / 255.0
+        except Exception:
+            pass  # fall through to percentile stretch
+
+    # Pure-numpy fallback — always works
+    p2, p98 = np.percentile(img, (2, 98))
+    if p98 > p2:
+        img = np.clip((img - p2) / (p98 - p2), 0.0, 1.0)
+    return img
