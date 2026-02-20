@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir \
     torch torchvision \
     --index-url https://download.pytorch.org/whl/cpu
 
-# Install remaining deps
+# Install remaining deps — CACHEBUST forces fresh install
+ARG CACHEBUST=2
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
