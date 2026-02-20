@@ -411,8 +411,8 @@ class DeepLearningFeatureExtractor2D:
         
         # Now image is (H, W)
         # Resize to 224x224 for ResNet
-        img_arr = np.ascontiguousarray(image, dtype=np.float32)
-        tensor = torch.tensor(img_arr).unsqueeze(0).unsqueeze(0)
+        # Use .tolist() to bypass numpy↔PyTorch version incompatibilities
+        tensor = torch.tensor(image.tolist(), dtype=torch.float32).unsqueeze(0).unsqueeze(0)
         tensor = F.interpolate(tensor, size=(224, 224), mode='bilinear', align_corners=False)
         
         # Normalize to [0, 1] if not already
