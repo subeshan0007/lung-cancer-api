@@ -1,40 +1,29 @@
-# ── Build stage ──────────────────────────────────────────────────────
-FROM python:3.10-slim AS builder
-
-WORKDIR /build
-
-# System deps for building wheels
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-
-# Install PyTorch CPU-only FIRST from the official CPU index
-# This avoids downloading the 2.5GB CUDA version
-RUN pip install --no-cache-dir --prefix=/install \
-    torch torchvision \
-    --index-url https://download.pytorch.org/whl/cpu
-
-# Install remaining dependencies (torch already satisfied)
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
-
-# ── Runtime stage ────────────────────────────────────────────────────
+# Single-stage build — avoids the expensive multi-stage "importing" step
+# that causes Railway free tier to timeout at 10 minutes
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Copy installed packages from builder
-COPY --from=builder /install /usr/local
-
-# System libs needed at runtime (libGL for OpenCV headless)
+# System deps (build + runtime)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 libsm6 libxext6 libxrender-dev && \
+    gcc g++ libglib2.0-0 libsm6 libxext6 libxrender-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install PyTorch CPU-only FIRST (smallest version, ~185MB)
+RUN pip install --no-cache-dir \
+    torch torchvision \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Install remaining deps
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Remove build-only packages to save space
+RUN apt-get purge -y gcc g++ && apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy application code
-COPY app.py .
-COPY config_api.yaml .
+COPY app.py config_api.yaml ./
 COPY src/ ./src/
 COPY trained_models/ ./trained_models/
 
@@ -42,9 +31,4 @@ COPY trained_models/ ./trained_models/
 ENV PORT=8000
 EXPOSE $PORT
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT}/')" || exit 1
-
-# Start server
 CMD uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
