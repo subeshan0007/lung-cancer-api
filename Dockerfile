@@ -9,15 +9,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ libglib2.0-0 libsm6 libxext6 libxrender-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Install PyTorch CPU-only FIRST (smallest version, ~185MB)
+# Pin numpy BEFORE PyTorch so torch doesn't pull in numpy 2.x
+RUN pip install --no-cache-dir "numpy>=1.24.0,<2.0"
+
+# Install PyTorch CPU-only (will use the numpy 1.x already installed)
 RUN pip install --no-cache-dir \
     torch torchvision \
     --index-url https://download.pytorch.org/whl/cpu
 
-# Install remaining deps — CACHEBUST forces fresh install
-ARG CACHEBUST=2
+# Install remaining deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Verify correct versions are installed
+RUN python -c "import numpy; print('numpy:', numpy.__version__); import sklearn; print('sklearn:', sklearn.__version__)"
 
 # Remove build-only packages to save space
 RUN apt-get purge -y gcc g++ && apt-get autoremove -y && \
