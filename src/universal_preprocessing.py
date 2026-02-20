@@ -122,7 +122,7 @@ def _auto_crop(img: np.ndarray, threshold: float = 0.05) -> np.ndarray:
         r0, r1 = np.where(row_mask)[0][[0, -1]]
         c0, c1 = np.where(col_mask)[0][[0, -1]]
         if (r1 - r0) > 30 and (c1 - c0) > 30:
-            img = img[r0:r1 + 1, c0:c1 + 1]
+            img = np.ascontiguousarray(img[r0:r1 + 1, c0:c1 + 1])
     return img
 
 
@@ -132,7 +132,7 @@ def _enhance_contrast(img: np.ndarray) -> np.ndarray:
     appearance of HU-windowed DICOM images.
     """
     if HAS_CV2:
-        img_u8 = np.clip(img * 255, 0, 255).astype(np.uint8)
+        img_u8 = np.ascontiguousarray(np.clip(img * 255, 0, 255).astype(np.uint8))
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         img_u8 = clahe.apply(img_u8)
         return img_u8.astype(np.float32) / 255.0
