@@ -31,4 +31,4 @@ COPY trained_models/ ./trained_models/
 ENV PORT=8000
 EXPOSE $PORT
 
-CMD uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+CMD ["python", "app.py"]
